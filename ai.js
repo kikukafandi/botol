@@ -19,8 +19,18 @@ async function tanyaGemini(pertanyaan, chatId) {
             });
         }
 
-        // Kirim pesan ke sesi chat yang sudah menyimpan memori sebelumnya
-        const response = await userMemories[chatId].sendMessage({ message: pertanyaan });
+        // 1. Ambil waktu server saat ini dan paksa ke Zona Waktu Jakarta (WIB)
+        const waktuSekarang = new Date().toLocaleString('id-ID', { 
+            timeZone: 'Asia/Jakarta',
+            dateStyle: 'full', 
+            timeStyle: 'long' 
+        });
+        
+        // 2. Selipkan informasi waktu ke dalam pertanyaan secara sembunyi-sembunyi
+        const pesanKeAI = `[Konteks Sistem: Waktu saat ini adalah ${waktuSekarang}]\n\nUser: ${pertanyaan}`;
+
+        // Kirim pesan yang sudah diselipkan waktu ke sesi chat
+        const response = await userMemories[chatId].sendMessage({ message: pesanKeAI });
         return response.text;
         
     } catch (error) {
