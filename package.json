@@ -12,9 +12,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google-cloud/local-auth": "^3.0.1",
     "@google/genai": "^1.44.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "googleapis": "^171.4.0",
     "node-telegram-bot-api": "^0.67.0"
   }
 }

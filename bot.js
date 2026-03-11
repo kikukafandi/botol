@@ -5,6 +5,7 @@ const TelegramBot = require('node-telegram-bot-api');
 // Import modul buatan sendiri
 const { DATA_KULIAH, JADWAL_KULIAH } = require('./data');
 const { tanyaGemini } = require('./ai');
+const { buatTugasDiDocs } = require('./docs'); // <--- TAMBAHAN BARU
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -41,10 +42,7 @@ bot.on('message', async (msg) => {
     const chatId = msg.chat.id.toString();
     const text = msg.text ? msg.text : "";
 
-    // Kunci Keamanan: Hanya merespons dari ID kamu
     if (chatId !== TELEGRAM_CHAT_ID) return;
-
-    // Abaikan jika pesan bukan teks (misal: stiker, foto, dokumen)
     if (!text) return; 
 
     // 1. Cek apakah ini perintah sistem (pakai garis miring)
@@ -52,8 +50,9 @@ bot.on('message', async (msg) => {
         const helpText = "🤖 <b>Bot Asisten Kuliah & AI Aktif!</b>\n\n" +
                          "Perintah Sistem:\n" +
                          "📅 /jadwal - Cek jadwal kuliah hari ini\n" +
-                         "🔑 /cek_token - Cek apakah token ETHOL valid\n\n" +
-                         "💡 <i>Tip: Kamu bisa langsung ketik pesan apa saja (tanpa garis miring) untuk ngobrol sama AI Botol!</i>";
+                         "🔑 /cek_token - Cek apakah token ETHOL valid\n" +
+                         "📝 /kerjakan [soal] - Suruh AI ngerjain tugas di Docs\n\n" +
+                         "💡 <i>Tip: Kamu bisa langsung ketik pesan apa saja untuk ngobrol sama AI Botol!</i>";
         bot.sendMessage(chatId, helpText, {parse_mode: "HTML"});
     } 
     else if (text.toLowerCase().startsWith('/jadwal')) {
@@ -62,17 +61,32 @@ bot.on('message', async (msg) => {
     else if (text.toLowerCase().startsWith('/cek_token')) {
         cekValiditasToken(chatId);
     } 
+    // ---> TAMBAHAN: FITUR AUTO-STUDENT BIKIN TUGAS
+    else if (text.toLowerCase().startsWith('/kerjakan ')) {
+        const soalTugas = text.substring(10); 
+        
+        bot.sendMessage(chatId, "⏳ Siap Bos! Otak AI sedang mikir dan tangan robot lagi ngetik di Google Docs...");
+        
+        try {
+            const promptTugas = `Tolong kerjakan tugas ini dengan bahasa akademis mahasiswa yang rapi, lengkap dengan poin-poin dan buatkan daftar pustaka yang relevan di akhir. Ini tugasnya:\n\n${soalTugas}`;
+            const jawabanAI = await tanyaGemini(promptTugas, chatId); 
+            
+            const judulFile = "Tugas_Otomatis_Afandi_" + new Date().getTime();
+            const linkDocs = await buatTugasDiDocs(judulFile, jawabanAI);
+            
+            bot.sendMessage(chatId, `✅ <b>Tugas Beres Bos!</b>\n\nLangsung cek dan rapihin dikit di sini:\n${linkDocs}`, {parse_mode: "HTML"});
+        } catch (error) {
+            bot.sendMessage(chatId, "⚠️ Waduh, ada error pas bikin Docs: " + error.message);
+        }
+    }
     // 2. Jika bukan perintah sistem, anggap ini ajakan ngobrol ke AI!
     else {
-        // Mengirim status "typing..." agar bot terlihat natural
         bot.sendChatAction(chatId, 'typing');
-        
-        // Langsung lempar teks utuh ke Gemini
-        const jawabanAI = await tanyaGemini(text);
+        // UPDATE: Tambahkan chatId agar AI mengingat percakapan
+        const jawabanAI = await tanyaGemini(text, chatId);
         bot.sendMessage(chatId, jawabanAI, {parse_mode: "Markdown"});
     }
 });
-
 // ==========================================
 // LOGIKA AKADEMIK & ETHOL
 // ==========================================
