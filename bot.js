@@ -30,7 +30,11 @@ const HEADERS = {
     "referer": "https://ethol.pens.ac.id/mahasiswa/kuliah/detail"
 };
 
-const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: true});
+const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: true,request:{
+    agentOptions:{
+        family: 4
+    }
+}});
 let cacheHarian = {};
 
 console.log("🤖 Bot sedang berjalan di komputer lokal...");

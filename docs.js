@@ -43,6 +43,7 @@ async function authorize() {
     }
 
     try {
+        // PERHATIAN: Ini akan membuka browser di laptopmu untuk minta izin
         client = await authenticate({
             scopes: SCOPES,
             keyfilePath: CREDENTIALS_PATH,
@@ -52,7 +53,7 @@ async function authorize() {
         }
         return client;
     } catch (err) {
-        console.error('⚠️ Autentikasi gagal. Pastikan credentials.json format OAuth2 (bukan service account)');
+        console.error('⚠️ Autentikasi gagal. Pastikan credentials.json format OAuth2 Desktop (bukan service account)');
         throw err;
     }
 }
@@ -84,7 +85,7 @@ async function buatTugasDiDocs(judul, konten) {
             }
         });
 
-        // Set permission public
+        // Set permission public (Akan aman karena errornya di-catch kalau kampus memblokir)
         try {
             await drive.permissions.create({
                 fileId: documentId,
@@ -94,7 +95,7 @@ async function buatTugasDiDocs(judul, konten) {
                 }
             });
         } catch (permError) {
-            console.warn('⚠️ Tidak bisa set public:', permError.message);
+            console.warn('⚠️ Info: Gagal set link ke public (mungkin diblokir admin kampus), tapi file tetap berhasil dibuat di Google Drive kamu.');
         }
 
         const docLink = `https://docs.google.com/document/d/${documentId}/edit`;
@@ -103,8 +104,6 @@ async function buatTugasDiDocs(judul, konten) {
 
     } catch (error) {
         console.error("Gagal membuat Google Docs:", error.message);
-        throw error;
-        console.error("Error Message:", error.message);
         throw error; // Lempar error ke bot.js agar dikirim ke Telegram
     }
 }
